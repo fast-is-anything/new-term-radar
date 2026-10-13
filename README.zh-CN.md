@@ -293,7 +293,7 @@ python -m radar daily --skip x,hf --out report.md  # 其余全部，每天一次
 | `year_curve` | `enabled`：「近 12 个月」那一列，数据来自搜索量查询（免费） |
 | `dot_com` | `enabled`、`max_rows`（8：每次查几个优先行，名字优先） |
 | `ai_answers` | `enabled`（`false`：每个回答约 $0.004）、`engines`（`["chatgpt"]`；加 `"google"` 即同时问 AI Mode）、`max_rows`（6）、`prompt`（`"What is the best tool to {job}?"`）、`location_code`（2840）、`language_code`（`en`） |
-| `gsc` | `site`（`sc-domain:example.com`）和 `token_file`。留 `{}` 即关闭；配了之后 `yours` 也会读你在每个词上的平均排名 |
+| `gsc` | 列表，每个站点一项：`[{"site": "sc-domain:example.com", "token_file": "gsc_token.json"}]`。一个 token 覆盖授权账号能读的所有站点，所以 `token_file` 通常不用写；某个站点失败会报出原因，不影响其它站点。留 `[]` 即关闭。配了之后 `yours` 会读第一个站点上你在每个词的平均排名 |
 
 添加某个站的 sitemap 之前，请先看它的 robots.txt，`pause` 不要低于它的 crawl-delay。示例配置每天总共几十次请求，按 `pause` 间隔发出。
 
@@ -304,7 +304,7 @@ pip install google-auth-oauthlib
 python scripts/gsc_auth.py gsc_client.json   # 打开一次浏览器授权，写出 gsc_token.json
 ```
 
-`gsc_client.json` 是 Google Cloud Console 里类型为「桌面应用」的 OAuth 客户端，所在项目要启用 Search Console API。然后设置 `"gsc": {"site": "sc-domain:你的域名"}`。授权是只读的，凭证只留在你自己的机器上，`.gitignore` 已经把它排除了。
+`gsc_client.json` 是 Google Cloud Console 里类型为「桌面应用」的 OAuth 客户端，所在项目要启用 Search Console API。然后设置 `"gsc": [{"site": "sc-domain:你的域名"}]` —— 每个站点一项，一个 token 覆盖授权账号能读的所有站点。授权是只读的，凭证只留在你自己的机器上，`.gitignore` 已经把它排除了。
 
 ### 邮件（可选）
 

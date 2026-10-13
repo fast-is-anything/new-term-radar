@@ -322,14 +322,29 @@ def pains(result: dict) -> str:
 
 
 def _gsc_lines(gsc: dict) -> list[str]:
+    """One block per configured site; a site that failed shows its reason and hides no other."""
     if gsc.get("off"):
         return []
     lines = ["", t("gsc_h"), ""]
-    if not gsc.get("queries"):
+    sites = gsc.get("sites") or []
+    if not sites:
         return lines + [t("recent_none", why=_state(gsc, t("gsc_none")))]
-    lines += [t("gsc_intro", window=gsc["window"], total=gsc["total_new"], min=gsc["min_impressions"]), "",
-              t("gsc_cols"), "|---|---|---|---|"]
-    return lines + [f"| {_cell(q['query'])} | {q['impressions']} | {q['clicks']} | {q['page']} |" for q in gsc["queries"]]
+    many = len(sites) > 1
+    for s in sites:
+        if many:
+            lines += [t("gsc_site_h", site=s["site"]), ""]
+        if s.get("error"):
+            lines += [t("recent_none", why=s["error"]), ""]
+        elif not s["queries"]:
+            lines += [t("recent_none", why=t("gsc_none")), ""]
+        else:
+            lines += [t("gsc_intro", window=gsc["window"], total=s["total_new"], min=gsc["min_impressions"]), "",
+                      t("gsc_cols"), "|---|---|---|---|"]
+            lines += [f"| {_cell(q['query'])} | {q['impressions']} | {q['clicks']} | {q['page']} |" for q in s["queries"]]
+            lines.append("")
+    while lines and not lines[-1]:
+        lines.pop()
+    return lines
 
 
 def _review_lines(cfg: dict, rev: dict, summ: dict) -> list[str]:

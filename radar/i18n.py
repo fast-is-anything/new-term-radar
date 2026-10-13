@@ -141,6 +141,7 @@ T = {
     "gsc_h": ("### ④ Search Console queries seen for the first time (fresh data, about a day behind)", "### ④ GSC 首次出现的搜索词(新鲜数据,约晚 1 天)"),
     "gsc_intro": ("{window}: {total} new queries; those with ≥{min} impressions:", "{window},共 {total} 个新词,曝光 ≥{min} 的:"),
     "gsc_cols": ("| Query | Impressions | Clicks | Landing page |", "| 搜索词 | 曝光 | 点击 | 落地页 |"),
+    "gsc_site_h": ("#### {site}", "#### {site}"),
     "gsc_none": ("no new queries", "没有新词"), "gsc_off": ("not configured", "未配置"),
     "review_h": ("### ⑤ Review (terms reported {days} days ago: did they rise in DataForSEO Trends?)", "### ⑤ 复盘({days} 天前报出的词,在 DataForSEO Trends 里起没起来)"),
     "review_cols": ("| Term | First reported | Verdict | Days ahead |", "| 词 | 首次报出 | 结论 | 提前天数 |"),

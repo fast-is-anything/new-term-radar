@@ -34,7 +34,7 @@ def site_domain(site: str) -> str:
 
 def own_domains(cfg: dict) -> list[str]:
     listed = (cfg.get("yours") or {}).get("domains") or []
-    site = (cfg.get("gsc") or {}).get("site")
+    site = gsc._first_site(cfg)
     return [site_domain(d) for d in (listed or ([site] if site else [])) if d]
 
 
@@ -56,7 +56,7 @@ def action(serp: dict | None, console: dict | None) -> str:
 
 def _console(rows: list[dict], cfg: dict, today: date) -> tuple[dict, bool, list[str]]:
     """(Search Console positions by query, whether they were read, errors)"""
-    if not (cfg.get("gsc") or {}).get("site"):
+    if not gsc._first_site(cfg):
         return {}, False, []
     try:
         return gsc.positions(cfg, [r["phrase"] for r in rows], today, cfg["yours"]["days"]), True, []

@@ -74,7 +74,7 @@ DEFAULTS = {
     "money": {"weekday": 0, "portfolio_sites": 12, "max_dr": 60, "max_sisters": 30,
               "ad_terms": ["ai ppt", "claude skills", "mcp server", "claude powerpoint"]},
     "sidelights": {"names": 5, "whois_names": 2, "whois_days": 30, "products": 8, "min_volume": 50, "location_code": 2840},
-    "gsc": {},
+    "gsc": [],
 }
 
 

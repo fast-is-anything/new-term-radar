@@ -263,8 +263,82 @@ def test_gsc_keeps_queries_the_earlier_window_never_saw():
     assert fresh == [{"query": "hyperframes skill", "impressions": 7, "clicks": 1, "page": "/a"}]
 
 
-def test_gsc_is_off_without_a_site(cfg):
+def test_gsc_is_off_without_any_site(cfg):
     assert gsc.gsc_new(cfg) == {"off": True}
+
+
+def test_gsc_rejects_the_old_object_shape(cfg):
+    cfg["gsc"] = {"site": "sc-domain:a.com"}
+    try:
+        gsc.gsc_new(cfg)
+        raise AssertionError("a dict is not a list of sites")
+    except RuntimeError:
+        pass
+
+
+def test_gsc_reads_every_site_on_its_own(cfg, monkeypatch):
+    cfg["gsc"] = [{"site": "sc-domain:a.com"}, {"site": "https://b.com/", "token_file": "b.json"}]
+    monkeypatch.setattr(gsc, "_token", lambda cfg, entry, cache=None: "token")
+    monkeypatch.setattr(gsc, "_query", lambda access, site, start, end, dimensions, fresh:
+                        [{"query": f"q on {site}", "page": "/x", "impressions": 9, "clicks": 1}] if fresh else [])
+
+    out = gsc.gsc_new(cfg)
+    assert [s["site"] for s in out["sites"]] == ["sc-domain:a.com", "https://b.com/"]
+    assert out["total_new"] == 2 and len(out["queries"]) == 2
+    text = "\n".join(report._gsc_lines(out))
+    assert text.count("#### ") == 2 and "q on https://b.com/" in text
+
+
+def test_gsc_one_failing_site_hides_no_other(cfg, monkeypatch):
+    cfg["gsc"] = [{"site": "sc-domain:broken.com"}, {"site": "sc-domain:ok.com"}]
+
+    def token(cfg, entry, cache=None):
+        if "broken" in entry["site"]:
+            raise RuntimeError("no Search Console token: gsc_token.json or GSC_TOKEN_JSON")
+        return "token"
+
+    monkeypatch.setattr(gsc, "_token", token)
+    monkeypatch.setattr(gsc, "_query", lambda access, site, start, end, dimensions, fresh:
+                        [{"query": "new term", "page": "/y", "impressions": 20, "clicks": 2}] if fresh else [])
+
+    out = gsc.gsc_new(cfg)
+    assert out["total_new"] == 1 and out["sites"][0]["error"].startswith("no Search Console token")
+    assert out["sites"][1]["queries"][0]["query"] == "new term"
+    text = "\n".join(report._gsc_lines(out))
+    assert "#### sc-domain:broken.com" in text and "no Search Console token" in text and "| new term |" in text
+
+
+def test_gsc_shows_an_entry_that_lacks_a_site_instead_of_dropping_it(cfg, monkeypatch):
+    cfg["gsc"] = [{"site": "sc-domain:a.com"}, {"token_file": "x.json"}]
+    monkeypatch.setattr(gsc, "_token", lambda cfg, entry, cache=None: "token")
+    monkeypatch.setattr(gsc, "_query", lambda access, site, start, end, dimensions, fresh:
+                        [{"query": "new term", "page": "/p", "impressions": 9, "clicks": 1}] if fresh else [])
+
+    out = gsc.gsc_new(cfg)
+    assert len(out["sites"]) == 2 and out["sites"][1]["error"].startswith('an entry needs a "site"')
+    text = "\n".join(report._gsc_lines(out))
+    assert 'an entry needs a "site"' in text and "| new term |" in text
+
+
+def test_gsc_fetches_a_token_shared_by_sites_only_once(cfg, monkeypatch):
+    (cfg["_dir"] / "gsc_token.json").write_text('{"client_id": "i", "client_secret": "s", "refresh_token": "r"}')
+    calls = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b'{"access_token": "access"}'
+
+    monkeypatch.setattr(gsc.urllib.request, "urlopen", lambda req, timeout=0: calls.append(req) or Response())
+    cache: dict = {}
+    assert gsc._token(cfg, {}, cache) == "access"
+    assert gsc._token(cfg, {}, cache) == "access"
+    assert len(calls) == 1  # the second site reuses the cached token
 
 
 # --- the name judge ------------------------------------------------------------------------
@@ -1989,7 +2063,7 @@ def test_volumes_carry_twelve_months_oldest_first(monkeypatch):
 def test_your_domains_come_from_the_config_or_the_search_console_property(cfg):
     assert yours.site_domain("sc-domain:Example.com") == "example.com" and yours.site_domain("https://www.example.com/blog") == "example.com"
     assert yours.own_domains(cfg) == []
-    cfg["gsc"] = {"site": "sc-domain:mysite.com"}
+    cfg["gsc"] = [{"site": "sc-domain:mysite.com"}]
     assert yours.own_domains(cfg) == ["mysite.com"]
     cfg["yours"]["domains"] = ["https://www.other.io/"]
     assert yours.own_domains(cfg) == ["other.io"]
@@ -1997,7 +2071,7 @@ def test_your_domains_come_from_the_config_or_the_search_console_property(cfg):
 
 
 def test_your_rank_turns_the_decision_into_an_action(cfg, monkeypatch):
-    cfg["gsc"] = {"site": "sc-domain:mysite.com"}
+    cfg["gsc"] = [{"site": "sc-domain:mysite.com"}]
     asked = []
 
     def positions(c, phrases, today, days):
@@ -2026,14 +2100,14 @@ def test_your_rank_turns_the_decision_into_an_action(cfg, monkeypatch):
 
 
 def test_search_console_positions_ask_once_for_the_exact_queries(cfg, monkeypatch):
-    cfg["gsc"] = {"site": "sc-domain:mysite.com"}
+    cfg["gsc"] = [{"site": "sc-domain:mysite.com"}]
     seen = {}
 
     def query(access, site, start, end, dimensions, fresh, filters=None):
         seen.update(site=site, days=(end - start).days + 1, dimensions=dimensions, filters=filters)
         return [{"query": "c++ tool", "page": "https://mysite.com/a", "impressions": 5, "clicks": 0, "position": 30.0},
                 {"query": "c++ tool", "page": "https://mysite.com/b", "impressions": 40, "clicks": 2, "position": 8.5}]
-    monkeypatch.setattr(gsc, "_token", lambda c: "token")
+    monkeypatch.setattr(gsc, "_token", lambda c, entry, cache=None: "token")
     monkeypatch.setattr(gsc, "_query", query)
     got = gsc.positions(cfg, ["C++ tool", "ai image detector"], TODAY, 28)
     assert got == {"c++ tool": {"position": 8.5, "page": "https://mysite.com/b", "impressions": 45, "clicks": 2}}

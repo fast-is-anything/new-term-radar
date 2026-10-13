@@ -298,7 +298,7 @@ and from `sources`:
 | `year_curve` | `enabled`: the twelve-month column, from the volume call (free) |
 | `dot_com` | `enabled`, `max_rows` (8: prioritized rows checked a run, names first) |
 | `ai_answers` | `enabled` (`false`: it costs about $0.004 an answer), `engines` (`["chatgpt"]`; add `"google"` for AI Mode), `max_rows` (6), `prompt` (`"What is the best tool to {job}?"`), `location_code` (2840), `language_code` (`en`) |
-| `gsc` | `site` (`sc-domain:example.com`) and `token_file`. Leave `{}` to turn the signal off; with it set, `yours` also reads your average position per keyword |
+| `gsc` | A list, one entry per site: `[{"site": "sc-domain:example.com", "token_file": "gsc_token.json"}]`. One token covers every site the account can read, so `token_file` is usually left out; a site that fails reports its reason without hiding the others. Leave `[]` to turn the signal off. With it set, `yours` reads your average position per keyword on the first site |
 
 Please read each site's robots.txt before you add its sitemap, and keep `pause` at or above its crawl-delay. The example config makes a few dozen requests a day in total, spaced by `pause`.
 
@@ -309,7 +309,7 @@ pip install google-auth-oauthlib
 python scripts/gsc_auth.py gsc_client.json   # opens a browser once, writes gsc_token.json
 ```
 
-`gsc_client.json` is an OAuth client of type "Desktop app" from Google Cloud Console, in a project with the Search Console API enabled. Then set `"gsc": {"site": "sc-domain:your-site.com"}`. The token is read-only and stays on your machine; `.gitignore` already lists it.
+`gsc_client.json` is an OAuth client of type "Desktop app" from Google Cloud Console, in a project with the Search Console API enabled. Then set `"gsc": [{"site": "sc-domain:your-site.com"}]` — one entry per site; one token covers every site the authorising account can read. The token is read-only and stays on your machine; `.gitignore` already lists it.
 
 ### Mail (optional)
 
