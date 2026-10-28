@@ -73,7 +73,7 @@ def run(fn, skip: bool = False) -> dict:
 
 def _finish(args, text: str, subject: str) -> None:
     if args.out:
-        Path(args.out).write_text(text)
+        Path(args.out).write_text(text, encoding="utf-8")
     print(text)
     if args.mail:
         print(notify.send(subject, text))
@@ -141,7 +141,7 @@ def cmd_daily(args, cfg: dict, state: Path) -> int:
     text = report.daily(cfg, lead, blocks, found, rev, summ, extra)
     if args.out:
         Path(args.out).with_suffix(".json").write_text(json.dumps(
-            {"leads": lead, **blocks, "gsc": found, "review": rev, "summary": summ, "keywords": extra["usecases"]}, ensure_ascii=False, indent=1, default=str))
+            {"leads": lead, **blocks, "gsc": found, "review": rev, "summary": summ, "keywords": extra["usecases"]}, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     _finish(args, text, f"New-term radar {date.today()}")
     return 0
 

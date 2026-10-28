@@ -3,7 +3,7 @@
 
   "x_accounts": {
     "labs": ["AnthropicAI", "claudeai", "OpenAI", "OpenAIDevs", "GoogleDeepMind", "GoogleAIStudio",
-             "Alibaba_Qwen", "deepseek_ai", "Kimi_Moonshot", "MiniMax__AI", "Zai_org", "xai",
+             "Alibaba_Qwen", "deepseek_ai", "Kimi_Moonshot", "MiniMax_AI", "Zai_org", "xai",
              "AIatMeta", "MistralAI", "huggingface", "cursor_ai",
              "Kling_ai", "runwayml", "pika_labs", "LumaLabsAI", "Hailuo_AI", "higgsfield_ai", "ViduAI_official", "Alibaba_Wan", "dreamina_ai", 
              "midjourney", "krea_ai"],
